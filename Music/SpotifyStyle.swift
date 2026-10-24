@@ -1,32 +1,20 @@
 import SwiftUI
 
 // MARK: - Spotify design tokens
+// NOTE: Color(hex:) already exists in CoverArt.swift (nonisolated). Do NOT redeclare it here.
 enum Spotify {
-    static let background   = Color(hex: "#121212")
-    static let card         = Color(hex: "#1F1F1F")
-    static let cardRaised   = Color.white.opacity(0.10)
-    static let green        = Color(hex: "#1ED760")
-    static let textPrimary  = Color.white
-    static let textSecondary = Color(hex: "#B3B3B3")
+    nonisolated static let background    = Color(hex: "#121212")
+    nonisolated static let card          = Color(hex: "#1F1F1F")
+    nonisolated static let cardRaised    = Color.white.opacity(0.10)
+    nonisolated static let green         = Color(hex: "#1ED760")
+    nonisolated static let textPrimary   = Color.white
+    nonisolated static let textSecondary = Color(hex: "#B3B3B3")
 
-    static let pageTitleFont  = Font.system(size: 26, weight: .bold, design: .rounded)
-    static let rowTitleFont   = Font.system(size: 16, weight: .bold, design: .rounded)
-    static let rowSubFont     = Font.system(size: 13, weight: .regular, design: .rounded)
-    static let shelfTitleFont = Font.system(size: 21, weight: .bold, design: .rounded)
-    static let tabFont        = Font.system(size: 11, weight: .semibold)
-}
-
-// MARK: - Color helper
-extension Color {
-    init(hex: String) {
-        let s = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-        var v: UInt64 = 0
-        Scanner(string: s).scanHexInt64(&v)
-        let r = Double((v & 0xFF0000) >> 16) / 255
-        let g = Double((v & 0x00FF00) >> 8)  / 255
-        let b = Double(v & 0x0000FF)         / 255
-        self = Color(.sRGB, red: r, green: g, blue: b, opacity: 1)
-    }
+    nonisolated static let pageTitleFont  = Font.system(size: 26, weight: .bold, design: .rounded)
+    nonisolated static let rowTitleFont   = Font.system(size: 16, weight: .bold, design: .rounded)
+    nonisolated static let rowSubFont     = Font.system(size: 13, weight: .regular, design: .rounded)
+    nonisolated static let shelfTitleFont = Font.system(size: 21, weight: .bold, design: .rounded)
+    nonisolated static let tabFont        = Font.system(size: 11, weight: .semibold)
 }
 
 // MARK: - Song row (title + artist + "...")
@@ -124,15 +112,7 @@ struct SpotifyGradientHeader<Cover: View>: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            cover()
-                .frame(width: 220, height: 220)
-                .clipShape(
-                    isArtist
-                    ? AnyShape(Circle())
-                    : AnyShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-                )
-                .shadow(radius: 20, y: 10)
-                .padding(.top, 40)
+            coverContent
 
             VStack(spacing: 4) {
                 Text(title)
@@ -175,13 +155,25 @@ struct SpotifyGradientHeader<Cover: View>: View {
             .ignoresSafeArea(edges: .top)
         )
     }
-}
 
-// MARK: - AnyShape helper
-struct AnyShape: Shape {
-    private let _path: (CGRect) -> Path
-    init<S: Shape>(_ s: S) { _path = { s.path(in: $0) } }
-    func path(in rect: CGRect) -> Path { _path(rect) }
+    // Artist → circle, album/playlist → 4pt rounded square.
+    // Uses ViewBuilder instead of a type-erased AnyShape (avoids Swift 6 Sendable complaint).
+    @ViewBuilder
+    private var coverContent: some View {
+        if isArtist {
+            cover()
+                .frame(width: 220, height: 220)
+                .clipShape(Circle())
+                .shadow(radius: 20, y: 10)
+                .padding(.top, 40)
+        } else {
+            cover()
+                .frame(width: 220, height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                .shadow(radius: 20, y: 10)
+                .padding(.top, 40)
+        }
+    }
 }
 
 // MARK: - Spotify screen wrapper
